@@ -2397,7 +2397,7 @@ def api_debug_pipeline():
 
 if __name__ == "__main__":
     _fetch_bot_username()
-    threading.Thread(target=run_bot_in_background, daemon=True).start()
+    (threading.Thread(target=run_bot_in_background, daemon=True).start() if os.environ.get("RUN_BOT_IN_APP", "true").strip().lower() not in ("0", "false", "no") else None)
     port = int(os.environ.get("PORT", 5000))
     # threaded=True — критично: без цього вбудований Flask-сервер обробляє запити
     # СТРОГО по одному. Аватарки каналів (і не тільки) роблять власний похід у

@@ -75,8 +75,12 @@ if not BOT_TOKEN:
         f"BOT_TOKEN не найден. Создай файл {_ENV_PATH} и добавь строку BOT_TOKEN=..."
     )
 
-# Посилання на веб-панель після деплою на Render (розділ "Как обновить ссылку" в інструкції)
-WEBAPP_URL = "https://runaround-enclose-spectator.ngrok-free.dev"
+# Посилання на веб-панель (Mini App). ОБОВ'ЯЗКОВО https з дійсним сертифікатом —
+# Telegram відмовляється відкривати web_app-кнопку на голому http://IP:порт,
+# тож самого лише переїзду на VPS замало без reverse-proxy (Caddy/nginx+Let's
+# Encrypt, Cloudflare Tunnel) чи тунелю (ngrok) поверх нього. Змінюється в .env,
+# без правки коду.
+WEBAPP_URL = os.environ.get("WEBAPP_URL", "https://example.com").strip()
 
 NEWS_CHECK_INTERVAL_SECONDS = 60  # було 600 (10 хв) — тепер раз на хвилину, майже "в ту саму хвилину"
 NEWS_MAX_AGE_MINUTES = 30  # Recency-фільтр: ігноруємо пости, старші за 30 хв на момент виявлення (легко змінити на 60)
