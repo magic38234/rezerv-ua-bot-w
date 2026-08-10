@@ -2727,9 +2727,19 @@ document.getElementById("toggle-recommended-btn").addEventListener("click", (e) 
 
 // ---------- Черга публікації ----------
 
+function _asUtcIso(isoString) {
+  // Сервер пише created_at/published_at через datetime.now().isoformat() на VPS з
+  // TZ=UTC — рядок БЕЗ 'Z'/офсету. Браузер в іншому поясі (напр. Київ, UTC+3)
+  // трактує такий рядок як ЛОКАЛЬНИЙ час, через що timeAgo "старить" новини на
+  // величину зсуву пояса (у Києві — рівно на 3 години). Домальовуємо 'Z', якщо
+  // офсету нема, щоб new Date() парсив рядок як UTC незалежно від пояса браузера.
+  if (!isoString) return isoString;
+  return /[Zz]|[+-]\d{2}:?\d{2}$/.test(isoString) ? isoString : `${isoString}Z`;
+}
+
 function timeAgo(isoString) {
   if (!isoString) return "";
-  const diffMin = Math.max(0, Math.round((Date.now() - new Date(isoString).getTime()) / 60000));
+  const diffMin = Math.max(0, Math.round((Date.now() - new Date(_asUtcIso(isoString)).getTime()) / 60000));
   if (diffMin < 1) return t("time.justNow");
   if (diffMin < 60) return `${diffMin} ${t("time.minAgo")}`;
   return `${Math.round(diffMin / 60)} ${t("time.hourAgo")}`;
@@ -2877,7 +2887,7 @@ async function loadQueue() {
       publishNoCdBtn.onclick = async () => {
         const r = await api("/api/queue/publish-now-nocd", { method: "POST", body: JSON.stringify({ id: it.id }) });
         if (r.ok) {
-          const timeLabel = new Date(r.published_at || Date.now()).toLocaleTimeString("uk-UA", { hour: "2-digit", minute: "2-digit" });
+          const timeLabel = new Date(r.published_at ? _asUtcIso(r.published_at) : Date.now()).toLocaleTimeString("uk-UA", { hour: "2-digit", minute: "2-digit" });
           tg.showAlert(`${t("queue.publishedUrgentAt")} ${timeLabel}`);
           loadQueue();
         } else {

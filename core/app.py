@@ -2397,7 +2397,13 @@ def api_debug_pipeline():
 
 if __name__ == "__main__":
     _fetch_bot_username()
-    (threading.Thread(target=run_bot_in_background, daemon=True).start() if os.environ.get("RUN_BOT_IN_APP", "true").strip().lower() not in ("0", "false", "no") else None)
+    # За замовчуванням (як і завжди) app.py сам піднімає бота у фоновому потоці —
+    # зручно для деплою одним процесом (напр. Render). Якщо ж bot.py запускається
+    # ОКРЕМИМ процесом (systemd, два сервіси і т.п.) — обидва почнуть polling з
+    # тим самим токеном і Telegram відповість Conflict. RUN_BOT_IN_APP=false в
+    # .env вимикає внутрішній потік саме для такого випадку.
+    if os.environ.get("RUN_BOT_IN_APP", "true").strip().lower() not in ("0", "false", "no"):
+        threading.Thread(target=run_bot_in_background, daemon=True).start()
     port = int(os.environ.get("PORT", 5000))
     # threaded=True — критично: без цього вбудований Flask-сервер обробляє запити
     # СТРОГО по одному. Аватарки каналів (і не тільки) роблять власний похід у
